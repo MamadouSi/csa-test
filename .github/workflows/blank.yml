@@ -39,14 +39,10 @@ jobs:
       - name: Attendre que le backend CSA soit prêt
         run: |
           container_name=$(docker-compose -f docker-compose-csa.yml ps -q csa-backend)
-          timeout=60
-          while [ $timeout -gt 0 ]; do
-            logs=$(docker logs $container_name 2>&1)
-            echo "$logs"
-            sleep 5
-            ((timeout-=5))
-          done
+          docker logs $container_name
+          sleep 30
           echo "Affichage des journaux terminé."
+
 
       - name: Exécuter les tests
         run: |
