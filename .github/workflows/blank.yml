@@ -44,10 +44,24 @@ jobs:
           echo "Affichage des journaux terminé."
 
 
+      
       - name: Exécuter les tests
         run: |
-          # Vos commandes de test ici
-          echo "Exécution des tests..."
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d '{
+            "codeFormation": "L3INFO",
+            "diplome": "L",
+            "n0Annee": 3,
+            "nomFormation": "Licence d'\''Informatique",
+            "doubleDiplome": "N",
+            "debutHabilitation": "2012-09-01T00:00:00Z",
+            "finHabilitation": "2016-09-01T00:00:00Z"
+          }' \
+          http://localhost:8081/api/formation/create
+
+      - name: Afficher les journaux du serveur MySQL
+        run: docker-compose logs mysql
 
       - name: Arrêter les services
         run: docker-compose -f docker-compose-mysql.yml -f docker-compose-csa.yml down
