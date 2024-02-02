@@ -41,11 +41,12 @@ jobs:
           DOCKER_COMPOSE_VERSION: 1.29.2
 
       - name: Attendre que MySQL soit prêt
-        run: docker-compose -f docker-compose-mysql.yml logs -f | grep -q 'MySQL init process done'
-        
+        run: |
+          docker-compose -f docker-compose-mysql.yml logs -f | grep -q 'MySQL init process done'
+          sleep 60  # Ajout de la temporisation
 
       - name: Afficher les journaux MySQL pendant 1 minute
-        run: docker-compose -f docker-compose-mysql.yml logs mysql | (sleep 60 && cat)
+        run: docker-compose -f docker-compose-mysql.yml logs mysql | cat
 
       - name: Démarrer le backend CSA
         run: docker-compose -f docker-compose-csa.yml up -d
