@@ -8,7 +8,7 @@ services:
       MYSQL_DATABASE: csa
       MYSQL_PASSWORD: root
     ports:
-      - "3306:3306"
+      - "3307:3306"  # Utilisation du port 3307 sur l'hôte pour éviter le conflit
     networks:
       - csa-network
 
