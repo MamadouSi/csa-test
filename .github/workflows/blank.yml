@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout le dépôt
         uses: actions/checkout@v3
 
-      - name: Set up Docker Compose and dockerize
+      - name: Configuration de Docker Compose et dockerize
         run: |
           sudo apt-get -yqq install docker-compose
           docker-compose --version
@@ -24,16 +24,27 @@ jobs:
           sudo mv dockerize /usr/local/bin/dockerize
           dockerize --version
 
-      - name: Start MySQL and CSA Backend
+      - name: Démarrer MySQL et CSA Backend
         run: |
           docker-compose up -d
           docker-compose ps
 
-      - name: Wait for MySQL to be ready
+      - name: Attendre que MySQL soit prêt
         run: dockerize -wait tcp://localhost:3306 -timeout 1m
 
+      - name: Attendre que le backend CSA soit prêt
+        run: |
+          container_name=$(docker-compose ps -q csa-backend)
+          timeout=60  # Définir une durée d'une minute
+          while [ $timeout -gt 0 ]; do
+            logs=$(docker logs $container_name 2>&1)
+            echo "$logs"
+            sleep 5
+            ((timeout-=5))
+          done
+          echo "Affichage des journaux terminé."
 
-      - name: Run Tests
+      - name: Exécuter les tests
         run: |
           curl -X POST \
           -H "Content-Type: application/json" \
@@ -48,5 +59,18 @@ jobs:
           }' \
           http://localhost:8081/api/formation/create
 
-      - name: Stop MySQL and CSA Backend
+      - name: Arrêter MySQL et CSA Backend
         run: docker-compose down
+
+      - name: Afficher les journaux du serveur MySQL
+        run: docker-compose logs mysql
+
+      - name: Informations de débogage
+        run: |
+          echo "Contenu du fichier Docker Compose :"
+          cat docker-compose.yml
+          echo "Variables d'environnement :"
+          printenv
+
+      - name: Vérifier l'état des services Docker
+        run: docker-compose ps
