@@ -1,4 +1,4 @@
-name: TEST
+name: CI
 
 on:
   push:
@@ -10,6 +10,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: csa
+          MYSQL_PASSWORD: root
+        ports:
+          - "3306:3306"
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
       - name: Checkout le dépôt
@@ -24,19 +35,27 @@ jobs:
           sudo mv dockerize /usr/local/bin/dockerize
           dockerize --version
 
-      - name: Démarrer MySQL et CSA Backend
-        run: |
-          docker-compose up -d
-          docker-compose ps
+      - name: Démarrer MySQL
+        run: docker-compose -f docker-compose-mysql.yml up -d
+        env:
+          DOCKER_COMPOSE_VERSION: 1.29.2
 
-      - name: Afficher les journaux du serveur MySQL
-        run: docker-compose logs mysql | (sleep 60 && cat)
+      - name: Attendre que MySQL soit prêt
+        run: docker-compose -f docker-compose-mysql.yml logs -f | grep -q 'MySQL init process done'
+        timeout: 300
 
+      - name: Afficher les journaux MySQL pendant 1 minute
+        run: docker-compose -f docker-compose-mysql.yml logs mysql | (sleep 60 && cat)
+
+      - name: Démarrer le backend CSA
+        run: docker-compose -f docker-compose-csa.yml up -d
+        env:
+          DOCKER_COMPOSE_VERSION: 1.29.2
 
       - name: Attendre que le backend CSA soit prêt
         run: |
-          container_name=$(docker-compose ps -q csa-backend)
-          timeout=60  # Définir une durée d'une minute
+          container_name=$(docker-compose -f docker-compose-csa.yml ps -q csa-backend)
+          timeout=60
           while [ $timeout -gt 0 ]; do
             logs=$(docker logs $container_name 2>&1)
             echo "$logs"
@@ -60,19 +79,20 @@ jobs:
           }' \
           http://localhost:8081/api/formation/create
 
-      - name: Arrêter MySQL et CSA Backend
-        run: docker-compose down
+      - name: Arrêter MySQL et le backend CSA
+        run: docker-compose -f docker-compose-mysql.yml -f docker-compose-csa.yml down
 
       - name: Afficher les journaux du serveur MySQL
-        run: docker-compose logs mysql
+        run: docker-compose -f docker-compose-mysql.yml logs mysql
 
       - name: Informations de débogage
         run: |
-          echo "Contenu du fichier Docker Compose :"
-          cat docker-compose.yml
+          echo "Contenu du fichier Docker Compose MySQL :"
+          cat docker-compose-mysql.yml
+          echo "Contenu du fichier Docker Compose CSA :"
+          cat docker-compose-csa.yml
           echo "Variables d'environnement :"
           printenv
 
       - name: Vérifier l'état des services Docker
-        run: docker-compose ps
-
+        run: docker-compose -f docker-compose-mysql.yml -f docker-compose-csa.yml ps
