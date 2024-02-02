@@ -30,7 +30,7 @@ jobs:
           docker-compose ps
 
       - name: Afficher les journaux du serveur MySQL
-        run: docker-compose logs mysql | (sleep 30 && cat)
+        run: docker-compose logs mysql | (sleep 60 && cat)
 
 
       - name: Attendre que le backend CSA soit prêt
