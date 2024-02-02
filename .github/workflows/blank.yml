@@ -29,8 +29,9 @@ jobs:
           docker-compose up -d
           docker-compose ps
 
-      - name: Attendre que MySQL soit prêt
-        run: dockerize -wait tcp://localhost:3306 -timeout 1m
+      - name: Afficher les journaux du serveur MySQL
+        run: docker-compose logs mysql | (sleep 30 && cat)
+
 
       - name: Attendre que le backend CSA soit prêt
         run: |
