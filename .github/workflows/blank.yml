@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Docker Compose and dockerize
         run: |
@@ -32,7 +33,20 @@ jobs:
         run: dockerize -wait tcp://localhost:3306 -timeout 1m
 
       - name: Wait for CSA Backend to be ready
-        run: dockerize -wait http://localhost:8081/actuator/health -timeout 1m
+        run: |
+          container_name='csa-backend'
+          timeout=300  # Set a reasonable timeout
+          while [ $timeout -gt 0 ]; do
+            logs=$(docker logs $container_name 2>&1)
+            if echo "$logs" | grep -q "Application started"; then
+              echo "Backend container is ready."
+              exit 0
+            fi
+            sleep 5
+            ((timeout-=5))
+          done
+          echo "Timeout: Backend container did not start within the expected time."
+          exit 1
 
       - name: Run Tests
         run: |
@@ -42,7 +56,7 @@ jobs:
             "codeFormation": "L3INFO",
             "diplome": "L",
             "n0Annee": 3,
-            "nomFormation": "Licence d'Informatique",
+            "nomFormation": "Licence d'\''Informatique",
             "doubleDiplome": "N",
             "debutHabilitation": "2012-09-01T00:00:00Z",
             "finHabilitation": "2016-09-01T00:00:00Z"
