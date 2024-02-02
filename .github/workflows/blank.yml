@@ -63,8 +63,9 @@ jobs:
       - name: Afficher le contenu de la table FORMATION dans MySQL
         run: |
           # Utilisez la commande docker exec pour exécuter la requête MySQL
-          docker exec -i $(docker-compose -f docker-compose-mysql.yml ps -q mysql) mysql -uroot -proot -e "SHOW TABLES;"
+          docker exec -i $(docker-compose -f docker-compose-mysql.yml ps -q mysql) mysql -uroot -proot csa -e "SHOW TABLES;"
 
+      
       - name: Arrêter les services
         run: docker-compose -f docker-compose-mysql.yml -f docker-compose-csa.yml down
 
