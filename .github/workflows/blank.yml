@@ -60,8 +60,10 @@ jobs:
           }' \
           http://localhost:8081/api/formation/create
 
-      - name: Afficher les journaux du serveur MySQL
-        run: docker-compose logs mysql
+      - name: Afficher le contenu de la table FORMATION dans MySQL
+        run: |
+          # Utilisez la commande docker exec pour exécuter la requête MySQL
+          docker exec -i $(docker-compose -f docker-compose-mysql.yml ps -q mysql) mysql -uroot -proot csa -e "SELECT * FROM FORMATION;"
 
       - name: Arrêter les services
         run: docker-compose -f docker-compose-mysql.yml -f docker-compose-csa.yml down
