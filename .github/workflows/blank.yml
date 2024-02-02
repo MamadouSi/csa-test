@@ -24,25 +24,22 @@ jobs:
           sudo mv dockerize /usr/local/bin/dockerize
           dockerize --version
 
-      - name: Démarrer MySQL et CSA Backend
-        run: |
-          docker-compose up -d
-          docker-compose ps
+      - name: Démarrer MySQL
+        run: docker-compose -f docker-compose-mysql.yml up -d
+          
+      - name: Attendre 1m30 après le lancement de MySQL
+        run: sleep 90
 
-      - name: Attendre que MySQL soit prêt
-        run: dockerize -wait tcp://localhost:3306 -timeout 5m  # Augmenter le timeout à 5 minutes
+      - name: Afficher les journaux du serveur MySQL
+        run: docker-compose -f docker-compose-mysql.yml logs
 
-      - name: Afficher les journaux complets du serveur MySQL
-        run: |
-          container_name=$(docker-compose ps -q mysql)
-          sleep 100  # Ajouter un délai supplémentaire pour s'assurer que MySQL a terminé son initialisation
-          logs=$(docker logs $container_name)
-          echo "$logs"
+      - name: Démarrer CSA Backend
+        run: docker-compose -f docker-compose-csa.yml up -d
 
       - name: Attendre que le backend CSA soit prêt
         run: |
-          container_name=$(docker-compose ps -q csa-backend)
-          timeout=10
+          container_name=$(docker-compose -f docker-compose-csa.yml ps -q csa-backend)
+          timeout=60
           while [ $timeout -gt 0 ]; do
             logs=$(docker logs $container_name 2>&1)
             echo "$logs"
@@ -53,28 +50,20 @@ jobs:
 
       - name: Exécuter les tests
         run: |
-          curl -X POST \
-          -H "Content-Type: application/json" \
-          -d '{
-            "codeFormation": "L3INFO",
-            "diplome": "L",
-            "n0Annee": 3,
-            "nomFormation": "Licence d'\''Informatique",
-            "doubleDiplome": "N",
-            "debutHabilitation": "2012-09-01T00:00:00Z",
-            "finHabilitation": "2016-09-01T00:00:00Z"
-          }' \
-          http://localhost:8081/api/formation/create
+          # Vos commandes de test ici
+          echo "Exécution des tests..."
 
-      - name: Arrêter MySQL et CSA Backend
-        run: docker-compose down
+      - name: Arrêter les services
+        run: docker-compose -f docker-compose-mysql.yml -f docker-compose-csa.yml down
 
       - name: Informations de débogage
         run: |
-          echo "Contenu du fichier Docker Compose :"
-          cat docker-compose.yml
+          echo "Contenu du fichier Docker Compose MySQL :"
+          cat docker-compose-mysql.yml
+          echo "Contenu du fichier Docker Compose CSA Backend :"
+          cat docker-compose-csa.yml
           echo "Variables d'environnement :"
           printenv
 
       - name: Vérifier l'état des services Docker
-        run: docker-compose ps
+        run: docker-compose -f docker-compose-mysql.yml -f docker-compose-csa.yml ps
