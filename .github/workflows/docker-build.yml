@@ -1,0 +1,53 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: csa
+          MYSQL_PASSWORD: root
+        ports:
+          - "3306:3306"
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      csa-backend:
+        image: siyourself/csa-backend:latest
+        env:
+          - spring.datasource.url=jdbc:mysql://mysql:3306/csa?serverTimezone=UTC
+          - spring.datasource.username=root
+          - spring.datasource.password=root
+        ports:
+          - "8081:8081"
+        options: --health-cmd="curl -f http://localhost:8081/actuator/health" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Wait for MySQL to be ready
+        run: dockerize -wait tcp://localhost:3306 -timeout 1m
+
+      - name: Wait for CSA Backend to be ready
+        run: dockerize -wait http://localhost:8081/actuator/health -timeout 1m
+
+      - name: Run Tests
+        run: |
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d '{
+            "codeFormation": "L3INFO",
+            "diplome": "L",
+            "n0Annee": 3,
+            "nomFormation": "Licence d'Informatique",
+            "doubleDiplome": "N",
+            "debutHabilitation": "2012-09-01T00:00:00Z",
+            "finHabilitation": "2016-09-01T00:00:00Z"
+          }' \
+          http://localhost:8081/api/formation/create
