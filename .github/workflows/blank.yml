@@ -1,4 +1,4 @@
-name: CI
+name: TEST
 
 on:
   push:
@@ -29,17 +29,9 @@ jobs:
           docker-compose up -d
           docker-compose ps
 
-          # Obtenez l'adresse IP du conteneur GitLab Runner
-          runner_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $HOSTNAME)
-          echo "Adresse IP du conteneur GitLab Runner: $runner_ip"
-
-          # Remplacez localhost par l'adresse IP du conteneur GitLab Runner dans le fichier docker-compose.yml
-          sed -i "s/localhost/$runner_ip/" docker-compose.yml
-
       - name: Afficher les journaux du serveur MySQL
         run: docker-compose logs mysql | (sleep 30 && cat)
 
-      
 
       - name: Attendre que le backend CSA soit prêt
         run: |
@@ -55,7 +47,6 @@ jobs:
 
       - name: Exécuter les tests
         run: |
-          # Utilisez l'adresse IP du conteneur GitLab Runner dans l'URL
           curl -X POST \
           -H "Content-Type: application/json" \
           -d '{
@@ -67,7 +58,7 @@ jobs:
             "debutHabilitation": "2012-09-01T00:00:00Z",
             "finHabilitation": "2016-09-01T00:00:00Z"
           }' \
-          http://$runner_ip:8081/api/formation/create
+          http://localhost:8081/api/formation/create
 
       - name: Arrêter MySQL et CSA Backend
         run: docker-compose down
