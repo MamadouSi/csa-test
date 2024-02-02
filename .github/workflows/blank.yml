@@ -32,21 +32,6 @@ jobs:
       - name: Wait for MySQL to be ready
         run: dockerize -wait tcp://localhost:3306 -timeout 1m
 
-      - name: Wait for CSA Backend to be ready
-        run: |
-          container_name='csa-backend'
-          timeout=300  # Set a reasonable timeout
-          while [ $timeout -gt 0 ]; do
-            logs=$(docker logs $container_name 2>&1)
-            if echo "$logs" | grep -q "Application started"; then
-              echo "Backend container is ready."
-              exit 0
-            fi
-            sleep 5
-            ((timeout-=5))
-          done
-          echo "Timeout: Backend container did not start within the expected time."
-          exit 1
 
       - name: Run Tests
         run: |
