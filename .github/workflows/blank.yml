@@ -30,7 +30,7 @@ jobs:
           docker-compose ps
 
       - name: Attendre que MySQL soit prêt
-        run: dockerize -wait tcp://localhost:3306 -timeout 1m
+        run: dockerize -wait tcp://localhost:3306 -timeout 5m  # Augmenter le timeout à 5 minutes
 
       - name: Afficher les journaux du serveur MySQL
         run: docker-compose logs mysql
@@ -38,7 +38,7 @@ jobs:
       - name: Attendre que le backend CSA soit prêt
         run: |
           container_name=$(docker-compose ps -q csa-backend)
-          timeout=60  # Définir une durée d'une minute
+          timeout=10  # Réduire le timeout pour le backend
           while [ $timeout -gt 0 ]; do
             logs=$(docker logs $container_name 2>&1)
             echo "$logs"
@@ -61,8 +61,6 @@ jobs:
             "finHabilitation": "2016-09-01T00:00:00Z"
           }' \
           http://localhost:8081/api/formation/create
-
-      
 
       - name: Arrêter MySQL et CSA Backend
         run: docker-compose down
