@@ -42,7 +42,7 @@ jobs:
 
       - name: Attendre que MySQL soit prêt
         run: docker-compose -f docker-compose-mysql.yml logs -f | grep -q 'MySQL init process done'
-        timeout: 300
+        
 
       - name: Afficher les journaux MySQL pendant 1 minute
         run: docker-compose -f docker-compose-mysql.yml logs mysql | (sleep 60 && cat)
