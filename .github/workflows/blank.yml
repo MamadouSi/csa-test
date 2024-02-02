@@ -35,7 +35,7 @@ jobs:
       - name: Afficher les journaux complets du serveur MySQL
         run: |
           container_name=$(docker-compose ps -q mysql)
-          sleep 30  # Ajouter un délai supplémentaire pour s'assurer que MySQL a terminé son initialisation
+          sleep 100  # Ajouter un délai supplémentaire pour s'assurer que MySQL a terminé son initialisation
           logs=$(docker logs $container_name)
           echo "$logs"
 
